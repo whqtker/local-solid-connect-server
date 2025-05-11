@@ -47,6 +47,7 @@ public class ApplicationQueryService {
      * */
     @Transactional(readOnly = true)
     // todo: 임시로 단일 키로 캐시 적용. 추후 캐싱 전략 재검토 필요.
+    // 결과를 캐시에 저장, 캐시 키를 key, ttlSec로 유효 시간 설정
     @ThunderingHerdCaching(key = "applications:all", cacheManager = "customCacheManager", ttlSec = 86400)
     public ApplicationsResponse getApplicants(SiteUser siteUser, String regionCode, String keyword) {
         // 국가와 키워드와 지역을 통해 대학을 필터링한다.
@@ -62,7 +63,10 @@ public class ApplicationQueryService {
 
     @Transactional(readOnly = true)
     public ApplicationsResponse getApplicantsByUserApplications(SiteUser siteUser) {
+        // 사용자가 지원한 대학 조회
         Application userLatestApplication = applicationRepository.getApplicationBySiteUserAndTerm(siteUser, term);
+
+        // 지원한 대학 추출, 1지망은 필수, 2, 3지망은 선택(null 가능)
         List<University> userAppliedUniversities = Arrays.asList(
                         Optional.ofNullable(userLatestApplication.getFirstChoiceUniversity())
                                 .map(UniversityInfoForApply::getUniversity)
@@ -77,6 +81,7 @@ public class ApplicationQueryService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
+        // 특정 지망으로 지원한 다른 지원자 조회
         List<UniversityApplicantsResponse> firstChoiceApplicants = getFirstChoiceApplicants(userAppliedUniversities, siteUser, term);
         List<UniversityApplicantsResponse> secondChoiceApplicants = getSecondChoiceApplicants(userAppliedUniversities, siteUser, term);
         List<UniversityApplicantsResponse> thirdChoiceApplicants = getThirdChoiceApplicants(userAppliedUniversities, siteUser, term);
@@ -87,12 +92,14 @@ public class ApplicationQueryService {
     // 금학기에 지원이력이 있는 사용자만 지원정보를 확인할 수 있도록 한다.
     @Transactional(readOnly = true)
     public void validateSiteUserCanViewApplicants(SiteUser siteUser) {
+        // 현 사용자의 지원서 상태가 APPROVED 인지 확인
         VerifyStatus verifyStatus = applicationRepository.getApplicationBySiteUserAndTerm(siteUser, term).getVerifyStatus();
         if (verifyStatus != VerifyStatus.APPROVED) {
             throw new CustomException(APPLICATION_NOT_APPROVED);
         }
     }
 
+    // 해당 대학을 1지망으로 지원한 지원자들의 정보 조회
     private List<UniversityApplicantsResponse> getFirstChoiceApplicants(List<University> universities, SiteUser siteUser, String term) {
         return getApplicantsByChoice(
                 universities,
@@ -121,12 +128,15 @@ public class ApplicationQueryService {
             List<University> searchedUniversities,
             SiteUser siteUser,
             Function<UniversityInfoForApply, List<Application>> findApplicationsByChoice) {
+        // 주어진 대학 목록과 term 학기에 해당하는 대학 정보를 조회
         return universityInfoForApplyRepository.findByUniversitiesAndTerm(searchedUniversities, term).stream()
                 .map(universityInfoForApply -> UniversityApplicantsResponse.of(
                         universityInfoForApply,
+                        // 해당 대학에 특정 지망으로 지원한 지원서 조회
                         findApplicationsByChoice.apply(universityInfoForApply).stream()
                                 .map(ap -> ApplicantResponse.of(
                                         ap,
+                                        // 현재 로그인한 사용자의 지원서인지 표시
                                         Objects.equals(siteUser.getId(), ap.getSiteUser().getId())))
                                 .toList()))
                 .toList();

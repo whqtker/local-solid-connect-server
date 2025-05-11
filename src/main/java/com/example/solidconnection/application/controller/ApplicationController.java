@@ -39,6 +39,7 @@ public class ApplicationController {
                 .body(applicationSubmissionResponse);
     }
 
+    // 지원자 현황 조회
     @RequireAdminAccess
     @GetMapping
     public ResponseEntity<ApplicationsResponse> getApplicants(
@@ -46,7 +47,9 @@ public class ApplicationController {
             @RequestParam(required = false, defaultValue = "") String region,
             @RequestParam(required = false, defaultValue = "") String keyword
     ) {
+        // 현 사용자가 다른 지원자들의 정보를 볼 수 있는 권한이 있는지 확인
         applicationQueryService.validateSiteUserCanViewApplicants(siteUser);
+
         ApplicationsResponse result = applicationQueryService.getApplicants(siteUser, region, keyword);
         return ResponseEntity
                 .ok(result);
@@ -57,6 +60,8 @@ public class ApplicationController {
             @AuthorizedUser SiteUser siteUser
     ) {
         applicationQueryService.validateSiteUserCanViewApplicants(siteUser);
+
+        // 경쟁자 정보 조회
         ApplicationsResponse result = applicationQueryService.getApplicantsByUserApplications(siteUser);
         return ResponseEntity
                 .ok(result);
