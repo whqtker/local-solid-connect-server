@@ -31,6 +31,8 @@ public class AdminScoreController {
     private final AdminGpaScoreService adminGpaScoreService;
     private final AdminLanguageTestScoreService adminLanguageTestScoreService;
 
+    // @ModelAttribute: HTTP 요청 파라미터를 객체에 바인딩
+    // 학점 조회
     @GetMapping("/gpas")
     public ResponseEntity<PageResponse<GpaScoreSearchResponse>> searchGpaScores(
             @Valid @ModelAttribute ScoreSearchCondition scoreSearchCondition,
@@ -43,6 +45,7 @@ public class AdminScoreController {
         return ResponseEntity.ok(PageResponse.of(page));
     }
 
+    // 학점 검증 및 수정
     @PutMapping("/gpas/{gpa-score-id}")
     public ResponseEntity<GpaScoreResponse> updateGpaScore(
             @PathVariable("gpa-score-id") Long gpaScoreId,
@@ -52,6 +55,7 @@ public class AdminScoreController {
         return ResponseEntity.ok(response);
     }
 
+    // 어학 점수 조회
     @GetMapping("/language-tests")
     public ResponseEntity<PageResponse<LanguageTestScoreSearchResponse>> searchLanguageTestScores(
             @Valid @ModelAttribute ScoreSearchCondition scoreSearchCondition,
@@ -64,6 +68,7 @@ public class AdminScoreController {
         return ResponseEntity.ok(PageResponse.of(page));
     }
 
+    // 어학 점수 검증 및 수정
     @PutMapping("/language-tests/{language-test-score-id}")
     public ResponseEntity<LanguageTestScoreResponse> updateLanguageTestScore(
             @PathVariable("language-test-score-id") Long languageTestScoreId,

@@ -39,6 +39,7 @@ public class AdminLanguageTestScoreService {
                         languageTestScore.getLanguageTest().getLanguageTestReportUrl()
                 ),
                 request.verifyStatus(),
+                // 검증 상태가 REJECTED라면 거절 사유 명시, 그렇지 않다면 null로 설정
                 request.verifyStatus() == VerifyStatus.REJECTED ? request.rejectedReason() : null
         );
         return LanguageTestScoreResponse.from(languageTestScore);

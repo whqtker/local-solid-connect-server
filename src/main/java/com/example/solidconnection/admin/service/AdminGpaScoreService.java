@@ -39,6 +39,7 @@ public class AdminGpaScoreService {
                         gpaScore.getGpa().getGpaReportUrl()
                 ),
                 request.verifyStatus(),
+                // 검증 상태가 REJECTED라면 거절 사유 설정, 그렇지 않으면 거절 사유를 null로 설정
                 request.verifyStatus() == VerifyStatus.REJECTED ? request.rejectedReason() : null
         );
         return GpaScoreResponse.from(gpaScore);
