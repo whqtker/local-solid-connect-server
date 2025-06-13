@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static com.example.solidconnection.common.exception.ErrorCode.CAN_NOT_CHANGE_NICKNAME_YET;
+import static com.example.solidconnection.common.exception.ErrorCode.USER_NOT_FOUND;
 
 @RequiredArgsConstructor
 @Service
@@ -46,18 +47,22 @@ public class MyPageService {
      * */
     @Transactional
     public void updateMyPageInfo(SiteUser siteUser, MultipartFile imageFile, String nickname) {
+        SiteUser user = siteUserRepository.findById(siteUser.getId())
+            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        
         if (nickname != null) {
-            validateNicknameNotChangedRecently(siteUser.getNicknameModifiedAt());
-            siteUserRepository.updateNickname(siteUser.getId(), nickname, LocalDateTime.now());
+            validateNicknameNotChangedRecently(user.getNicknameModifiedAt());
+            user.setNickname(nickname);
+            user.setNicknameModifiedAt(LocalDateTime.now());
         }
 
         if (imageFile != null && !imageFile.isEmpty()) {
             UploadedFileUrlResponse uploadedFile = s3Service.uploadFile(imageFile, ImgType.PROFILE);
-            if (!isDefaultProfileImage(siteUser.getProfileImageUrl())) {
-                s3Service.deleteExProfile(siteUser);
+            if (!isDefaultProfileImage(user.getProfileImageUrl())) {
+                s3Service.deleteExProfile(user);
             }
             String profileImageUrl = uploadedFile.fileUrl();
-            siteUserRepository.updateProfileImage(siteUser.getId(), profileImageUrl);
+            user.setProfileImageUrl(profileImageUrl);
         }
     }
 
