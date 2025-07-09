@@ -19,3 +19,14 @@ services:
       - "6379:6379"
     volumes:
       - ./redis_data_local:/data
+
+  mongodb:
+    image: mongo:latest
+    container_name: solid-connection-local-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: solid_connection_mongo_user
+      MONGO_INITDB_ROOT_PASSWORD: solid_connection_mongo_password
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo_data_local:/data/db

@@ -32,4 +32,18 @@ public class ChatService {
 
         simpMessagingTemplate.convertAndSend("/sub/chat/room/" + roomId, chatMessage);
     }
+
+    public void broadcastJoinMessage(ChatMessageRequest request, Long roomId) {
+        String messageContent = request.sender() + "님이 입장하셨습니다.";
+        log.info("Broadcasting join message to room {}: {}", roomId, messageContent);
+
+        ChatMessage joinMessage = new ChatMessage(
+                roomId,
+                "system",
+                messageContent,
+                LocalDateTime.now()
+        );
+
+        simpMessagingTemplate.convertAndSend("/sub/chat/room/" + roomId, joinMessage);
+    }
 }
