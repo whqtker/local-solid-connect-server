@@ -47,12 +47,4 @@ public class ChatController {
         log.info("메시지 수신: {}, 룸 ID: {}", chatMessageRequest, roomId);
         chatService.sendMessage(chatMessageRequest, roomId);
     }
-
-    @MessageMapping("/chat/room/{roomId}")
-    public void handleJoinRoom(
-            @DestinationVariable Long roomId,
-            @Payload ChatMessageRequest joinRequest
-    ) {
-        log.info("사용자 입장: {}, 룸 ID: {}", joinRequest.sender(), roomId);
-        chatService.broadcastJoinMessage(joinRequest, roomId);
-    }}
+}
