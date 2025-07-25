@@ -46,16 +46,18 @@ public class AppleOAuthClient {
     // 토큰 발급 엔드포인트로 HTTP 요청 보냄
     public String requestIdToken(String code) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        MultiValueMap<String, String> formData = buildFormData(code);
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED); // Apple이 요구하는 형식
+        MultiValueMap<String, String> formData = buildFormData(code); // 요청 바디에 들어갈 파라미터를 구성
 
         try {
+            // exchange: 요청 메시지를 만들고 전송하여 응답을 받는 메서드
             ResponseEntity<AppleTokenDto> response = restTemplate.exchange(
                     properties.tokenUrl(),
                     HttpMethod.POST,
                     new HttpEntity<>(formData, headers),
-                    AppleTokenDto.class
+                    AppleTokenDto.class // JSON 객체를 AppleTokenDto로 역직렬화
             );
+            // 성공적으로 응답을 받으면 응답 바디에서 idToken을 추출하여 리턴
             return Objects.requireNonNull(response.getBody()).idToken();
         } catch (Exception e) {
             throw new CustomException(APPLE_AUTHORIZATION_FAILED, e.getMessage());
@@ -83,10 +85,10 @@ public class AppleOAuthClient {
     private String parseEmailFromToken(PublicKey applePublicKey, String idToken) {
         try {
             return Jwts.parser()
-                    .setSigningKey(applePublicKey)
-                    .parseClaimsJws(idToken)
-                    .getBody()
-                    .get("email", String.class);
+                    .setSigningKey(applePublicKey) // Apple의 공개 키로 서명을 검증하도록 설정
+                    .parseClaimsJws(idToken) // 서명 검증 수행, 성공 시 토큰 내용을 담은 객체 리턴
+                    .getBody() // 토큰의 payload(claims) 가져옴
+                    .get("email", String.class); // 이메일 추출
         } catch (Exception e) {
             throw new CustomException(INVALID_APPLE_ID_TOKEN);
         }

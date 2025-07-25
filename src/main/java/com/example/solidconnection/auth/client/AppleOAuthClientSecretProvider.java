@@ -32,6 +32,7 @@ public class AppleOAuthClientSecretProvider {
     private final AppleOAuthClientProperties appleOAuthClientProperties;
     private PrivateKey privateKey;
 
+    // 빈 생성, 의존성 주입 후 해당 메서드가 한 번만 수행되도록 보장
     @PostConstruct
     private void initPrivateKey() {
         privateKey = loadPrivateKey();
