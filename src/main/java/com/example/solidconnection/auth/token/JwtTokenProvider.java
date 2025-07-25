@@ -24,7 +24,7 @@ public class JwtTokenProvider implements TokenProvider {
 
     @Override
     public final String generateToken(String string, TokenType tokenType) {
-        Claims claims = Jwts.claims().setSubject(string);
+        Claims claims = Jwts.claims().setSubject(string); // 누구에 대한 토큰인지 설정
         Date now = new Date();
         Date expiredDate = new Date(now.getTime() + tokenType.getExpireTime());
         return Jwts.builder()
@@ -35,13 +35,14 @@ public class JwtTokenProvider implements TokenProvider {
                 .compact();
     }
 
+    // 토큰을 redis에 저장
     @Override
     public final String saveToken(String token, TokenType tokenType) {
         String subject = parseSubject(token);
         redisTemplate.opsForValue().set(
                 tokenType.addPrefix(subject),
                 token,
-                tokenType.getExpireTime(),
+                tokenType.getExpireTime(), // TTL
                 TimeUnit.MILLISECONDS
         );
         return token;
@@ -56,6 +57,7 @@ public class JwtTokenProvider implements TokenProvider {
     public Claims parseClaims(String token) {
         try {
             return Jwts.parser()
+                    // HMAC 알고리즘을 사용하였으므로 토큰 생성 사용한 비밀 키를 그대로 서명을 검증할 때 사용한다.
                     .setSigningKey(jwtProperties.secret())
                     .parseClaimsJws(token)
                     .getBody();

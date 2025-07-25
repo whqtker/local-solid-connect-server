@@ -33,8 +33,8 @@ public class KakaoOAuthClient {
     private final KakaoOAuthClientProperties kakaoOAuthClientProperties;
 
     public KakaoUserInfoDto getUserInfo(String code) {
-        String kakaoAccessToken = getKakaoAccessToken(code);
-        return getKakaoUserInfo(kakaoAccessToken);
+        String kakaoAccessToken = getKakaoAccessToken(code); // 인증 코드를 통해 access token 획득
+        return getKakaoUserInfo(kakaoAccessToken); // access token을 사용하여 사용자 정보 조회
     }
 
     private String getKakaoAccessToken(String code) {
@@ -58,6 +58,8 @@ public class KakaoOAuthClient {
     }
 
     private String buildTokenUri(String code) {
+        // 파라미터를 URL의 쿼리 스트링에 붙여서 보낸다.
+        // 따라서 HttpEntity는 null로 전달된다.
         return UriComponentsBuilder.fromHttpUrl(kakaoOAuthClientProperties.tokenUrl())
                 .queryParam("grant_type", "authorization_code")
                 .queryParam("client_id", kakaoOAuthClientProperties.clientId())
@@ -68,8 +70,9 @@ public class KakaoOAuthClient {
 
     private KakaoUserInfoDto getKakaoUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
+        headers.setBearerAuth(accessToken); // 토큰을 Authorization 헤더에 추가
 
+        // 사용자 정보를 조회하기 위한 GET 요청
         ResponseEntity<KakaoUserInfoDto> response = restTemplate.exchange(
                 kakaoOAuthClientProperties.userInfoUrl(),
                 HttpMethod.GET,

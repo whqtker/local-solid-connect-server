@@ -38,27 +38,29 @@ public class AppleOAuthClientSecretProvider {
         privateKey = loadPrivateKey();
     }
 
+    // Apple이 요구하는 명세에 따라 JWT 생성
     public String generateClientSecret() {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + TOKEN_DURATION);
 
         return Jwts.builder()
-                .setHeaderParam("alg", "ES256")
-                .setHeaderParam(KEY_ID_HEADER, appleOAuthClientProperties.keyId())
+                .setHeaderParam("alg", "ES256") // 서명 알고리즘
+                .setHeaderParam(KEY_ID_HEADER, appleOAuthClientProperties.keyId()) // kid 추가
                 .setSubject(appleOAuthClientProperties.clientId())
                 .setIssuer(appleOAuthClientProperties.teamId())
                 .setAudience(appleOAuthClientProperties.clientSecretAudienceUrl())
                 .setExpiration(expiration)
-                .signWith(SignatureAlgorithm.ES256, privateKey)
-                .compact();
+                .signWith(SignatureAlgorithm.ES256, privateKey) // 실제 서명 단계
+                .compact(); // header, payload, signature를 Base64URL로 인코딩, '.'으로 합쳐 JWT 생성
     }
 
+    // 비밀 키를 PrivateKey 객체로 변환
     private PrivateKey loadPrivateKey() {
         try {
             String secretKey = appleOAuthClientProperties.secretKey();
-            byte[] encoded = Base64.decodeBase64(secretKey);
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
-            KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            byte[] encoded = Base64.decodeBase64(secretKey); // 비밀 키를 디코딩하여 바이트 배열로 변환
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded); // PKCS#8 형식의 비밀 키로 래핑
+            KeyFactory keyFactory = KeyFactory.getInstance("EC"); // 서명 알고리즘이 ES256이므로, EC용 키 팩토리 로드
             return keyFactory.generatePrivate(keySpec);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new CustomException(FAILED_TO_READ_APPLE_PRIVATE_KEY);

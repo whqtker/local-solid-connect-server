@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+// 여기서 사용되는 signUpToken은 최종적으로 회원가입을 완료할 수 있도록 단기/일회성 토큰이다.
 @Component
 @RequiredArgsConstructor
 public class OAuthSignUpTokenProvider {
@@ -55,7 +56,7 @@ public class OAuthSignUpTokenProvider {
             Claims claims = tokenProvider.parseClaims(token);
             Objects.requireNonNull(claims.getSubject());
             String serializedAuthType = claims.get(AUTH_TYPE_CLAIM_KEY, String.class);
-            AuthType.valueOf(serializedAuthType);
+            AuthType.valueOf(serializedAuthType); // 유효한 AuthType인지 확인
         } catch (Exception e) {
             throw new CustomException(SIGN_UP_TOKEN_INVALID);
         }
@@ -63,6 +64,8 @@ public class OAuthSignUpTokenProvider {
 
     private void validateIssuedByServer(String email) {
         String key = TokenType.SIGN_UP.addPrefix(email);
+
+        // redis에 해당 키가 존재하는지 확인
         if (redisTemplate.opsForValue().get(key) == null) {
             throw new CustomException(SIGN_UP_TOKEN_NOT_ISSUED_BY_SERVER);
         }
